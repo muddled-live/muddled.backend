@@ -166,21 +166,11 @@ app.get('/submissions', async (req, res) => {
         if (videos.length > 0) {
             position = videos[videos.length - 1].id
         }
-
-        const uniqueVideos = new Map();
-
-        for (const video of videos) {
-            if (!uniqueVideos.has(video.code)) {
-                uniqueVideos.set(video.code, video);
-            }
-        }
-
-        const uniqueVideosArray = Array.from(uniqueVideos.values());
         res.status(200).json({
             message: `Successfully joined ${channel}`,
             data: {
                 cursor: position,
-                submissionsList: uniqueVideosArray,
+                submissionsList: videos,
             }
         });
     } catch (error) {
