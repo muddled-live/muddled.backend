@@ -30,6 +30,12 @@ const User = sequelize.define("users", {
         type: DataTypes.STRING,
         allowNull: false
     },
+    lastRefresh: {
+        type: DataTypes.DATE,
+    },
+    cursor: {
+        type: DataTypes.INTEGER,
+    },
 });
 
 const Video = sequelize.define("videos", {
@@ -48,7 +54,6 @@ const Video = sequelize.define("videos", {
 });
 
 sequelize.sync().then(() => {
-    console.log('Book table created successfully!');
 }).catch((error) => {
     console.error('Unable to create table : ', error);
 });
@@ -79,18 +84,34 @@ client.on('message', async (channel, userstate, message, self) => {
     if (self) return;
 
     try {
+        console.log('Created a new record : ', message)
         let videoId = await extractVideoID(message);
         if (videoId) {
-            let newVid = await getMetadata(videoId);
-            Video.create({
-                ...newVid,
-                submittedTo: channel.substring(1),
-                submittedBy: userstate.username
-            }).then(res => {
-                console.log('Created a new record : ')
-            }).catch((error) => {
-                console.error('Failed to create a new record : ', error);
+            const user = await User.findOne({
+                where: { username: channel.substring(1) }
+            })
+            const exists = await Video.findOne({
+                where: {
+                    submittedTo: channel.substring(1),
+                    code: videoId,
+                    id: {
+                        [Sequelize.Op.gt]: user.cursor
+                    }
+                },
             });
+
+            if (!exists) {
+                let newVid = await getMetadata(videoId);
+                Video.create({
+                    ...newVid,
+                    submittedTo: channel.substring(1),
+                    submittedBy: userstate.username
+                }).then(res => {
+                    console.log('Created a new record : ')
+                }).catch((error) => {
+                    console.error('Failed to create a new record : ', error);
+                });
+            }
         }
 
     } catch (error) {
@@ -115,10 +136,8 @@ app.get('/part/:channel', (req, res) => {
 });
 
 app.get('/submissions', async (req, res) => {
-    const { channel, limit = 15, cursor, max_duration = 86400, min_duration = 0 } = req.query;
-    let position = cursor;
-
-    console.log(req.url)
+    const { channel, limit = 24, cursor, max_duration = 86400, min_duration = 0 } = req.query;
+    let position = cursor
 
     if (!channel) {
         res.status(400).json({ error: 'Channel is required' });
@@ -128,15 +147,6 @@ app.get('/submissions', async (req, res) => {
         if (!client.channels.includes(channel)) {
             await client.join(channel);
         }
-
-        if (!cursor) {
-            const lastVideo = await Video.findOne({
-                where: { submittedTo: channel },
-            });
-            position = lastVideo.id
-        }
-
-        console.log(position)
 
         const videos = await Video.findAll({
             where: {
@@ -157,11 +167,20 @@ app.get('/submissions', async (req, res) => {
             position = videos[videos.length - 1].id
         }
 
+        const uniqueVideos = new Map();
+
+        for (const video of videos) {
+            if (!uniqueVideos.has(video.code)) {
+                uniqueVideos.set(video.code, video);
+            }
+        }
+
+        const uniqueVideosArray = Array.from(uniqueVideos.values());
         res.status(200).json({
             message: `Successfully joined ${channel}`,
             data: {
                 cursor: position,
-                submissionsList: videos,
+                submissionsList: uniqueVideosArray,
             }
         });
     } catch (error) {
@@ -170,21 +189,34 @@ app.get('/submissions', async (req, res) => {
     }
 });
 
+app.get('/load/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
 
+        if (!client.channels.includes(username)) {
+            await client.join(username);
+        }
 
-app.get('/join/:channel', (req, res) => {
-    const { channel } = req.params;
+        const [user, created] = await User.findOrCreate({
+            where: { username: username },
+            defaults: {
+                cursor: 0
+            }
+        });
 
-    if (!client.channels.includes(channel)) {
-        client.join(channel)
-            .then(() => {
-                res.status(200).json({ message: `Successfully joined ${channel}` });
-            })
-            .catch((err) => {
-                res.status(500).json({ error: `Error joining ${channel}: ${err}` });
+        if (!created) {
+            const lastVideo = await Video.findOne({
+                where: { submittedTo: username },
+                order: [['id', 'DESC']],
             });
-    } else {
-        res.status(400).json({ message: `Channel ${channel} already joined` });
+            user.cursor = lastVideo.id;
+            user.save()
+        }
+
+        res.status(200).json({ message: `User ${username} updated/created successfully`, data: user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server Error' });
     }
 });
 
