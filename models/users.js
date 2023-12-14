@@ -8,6 +8,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         cursor: {
             type: DataTypes.INTEGER,
+            defaultValue: 0,
         },
     },
         {
