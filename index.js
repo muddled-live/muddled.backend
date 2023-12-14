@@ -7,8 +7,6 @@ const { Sequelize, DataTypes } = require("sequelize");
 const { getMetadata, extractVideoID } = require('./youtube/youtube');
 const { Video, User, forceSyncDB } = require('./models');
 
-forceSyncDB()
-
 const app = express();
 const port = 3001;
 
@@ -23,7 +21,7 @@ const twitchOptions = {
         username: 'justinfan0735',
         password: '0durrdofx588ubjuiwzic7kp7mew53',
     },
-    channels: [process.env.CHANNEL],
+    channels: [],
 };
 
 
@@ -82,10 +80,6 @@ app.get('/submissions', async (req, res) => {
     }
 
     try {
-        if (!client.channels.includes(channel)) {
-            await client.join(channel);
-        }
-
         const videos = await Video.findAll({
             where: {
                 submittedTo: channel,
@@ -133,11 +127,12 @@ app.get('/load/:username', async (req, res) => {
         });
 
         if (!created) {
-            const lastVideo = await Video.findOne({
+            const lastVideo = await Video.findAll({
                 where: { submittedTo: username },
                 order: [['id', 'DESC']],
+                limit: 16
             });
-            user.cursor = lastVideo.id;
+            user.cursor = lastVideo[lastVideo.length - 1].id;
             user.save()
         }
 

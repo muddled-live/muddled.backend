@@ -9,7 +9,7 @@ function extractVideoID(msg) {
 
 async function getMetadata(code) {
     try {
-        const apiKey = process.env.YOUTUBE_API_KEY; // Assuming you have the API key in an environment variable
+        const apiKey = process.env.YOUTUBE_API_KEY;
 
         const response = await axios.get(`https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&id=${code}&key=${apiKey}`, {
             headers: {
@@ -27,7 +27,7 @@ async function getMetadata(code) {
         const likeCount = parseInt(vid.statistics.likeCount);
 
         const duration = moment.duration(vid.contentDetails.duration);
-        const totalSeconds = duration.asSeconds() + duration.minutes() * 60 + duration.hours() * 3600;
+        const totalSeconds = duration.asSeconds();
 
         return {
             code: code,
