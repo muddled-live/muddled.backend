@@ -38,9 +38,12 @@ client.on('message', async (channel, userstate, message, self) => {
         console.log('Created a new record : ', message)
         let videoId = await extractVideoID(message);
         if (videoId) {
-            const user = await User.findOne({
-                where: { username: channel.substring(1) }
-            })
+            const [user, created] = await User.findOrCreate({
+                where: { username: channel.substring(1) },
+                defaults: {
+                    cursor: 0
+                }
+            });
             const exists = await Video.findOne({
                 where: {
                     submittedTo: channel.substring(1),
