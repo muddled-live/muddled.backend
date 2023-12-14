@@ -5,7 +5,9 @@ const twitch = require('tmi.js');
 
 const { Sequelize, DataTypes } = require("sequelize");
 const { getMetadata, extractVideoID } = require('./youtube/youtube');
-const { Video, User } = require('./models');
+const { Video, User, forceSyncDB } = require('./models');
+
+forceSyncDB()
 
 const app = express();
 const port = 3001;
