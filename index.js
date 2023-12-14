@@ -5,63 +5,14 @@ const twitch = require('tmi.js');
 
 const { Sequelize, DataTypes } = require("sequelize");
 const { getMetadata, extractVideoID } = require('./youtube/youtube');
+const { Video, User } = require('./models');
 
 const app = express();
 const port = 3001;
 
-const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
-    {
-        host: process.env.DB_HOST,
-        dialect: 'mysql'
-    }
-);
-
-sequelize.authenticate().then(() => {
-    console.log('Connection has been established successfully.');
-}).catch((error) => {
-    console.error('Unable to connect to the database: ', error);
-});
-
-const User = sequelize.define("users", {
-    username: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    lastRefresh: {
-        type: DataTypes.DATE,
-    },
-    cursor: {
-        type: DataTypes.INTEGER,
-    },
-});
-
-const Video = sequelize.define("videos", {
-    code: DataTypes.STRING,
-    url: DataTypes.STRING,
-    thumbnail: DataTypes.STRING,
-    title: DataTypes.STRING,
-    viewCount: DataTypes.INTEGER,
-    likeCount: DataTypes.STRING,
-    publishedAt: DataTypes.DATE,
-    duration: DataTypes.INTEGER,
-    channel: DataTypes.STRING,
-    channelId: DataTypes.STRING,
-    submittedBy: DataTypes.STRING,
-    submittedTo: DataTypes.STRING,
-});
-
-sequelize.sync().then(() => {
-}).catch((error) => {
-    console.error('Unable to create table : ', error);
-});
-
-
 const twitchOptions = {
     options: {
-        debug: false,
+        debug: true,
     },
     connection: {
         reconnect: true,
@@ -74,12 +25,10 @@ const twitchOptions = {
 };
 
 
-
-// Connect to Twitch chat
 const client = new twitch.Client(twitchOptions);
 client.connect();
 
-// WebSocket setup for Twitch chat
+
 client.on('message', async (channel, userstate, message, self) => {
     if (self) return;
 
