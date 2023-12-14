@@ -34,7 +34,7 @@ async function getMetadata(code) {
             url: `https://www.youtube.com/watch?v=${code}`,
             title: vid.snippet.title,
             thumbnail: vid.snippet.thumbnails.medium.url,
-            createdAt: moment(vid.snippet.publishedAt).format('YYYY-MM-DD HH:mm:ss'),
+            publishedAt: moment(vid.snippet.publishedAt).format('YYYY-MM-DD HH:mm:ss'),
             viewCount: viewCount,
             likeCount: likeCount,
             duration: totalSeconds,
