@@ -119,22 +119,6 @@ client.on('message', async (channel, userstate, message, self) => {
     }
 });
 
-app.get('/part/:channel', (req, res) => {
-    const { channel } = req.params;
-
-    if (client.channels.includes(channel)) {
-        client.part(channel)
-            .then(() => {
-                res.status(200).json({ message: `Successfully parted ${channel}` });
-            })
-            .catch((err) => {
-                res.status(500).json({ error: `Error parting ${channel}: ${err}` });
-            });
-    } else {
-        res.status(400).json({ message: `Channel ${channel} hasnt joined` });
-    }
-});
-
 app.get('/submissions', async (req, res) => {
     const { channel, limit = 24, cursor, max_duration = 86400, min_duration = 0 } = req.query;
     let position = cursor
