@@ -21,7 +21,7 @@ const twitchOptions = {
         username: 'justinfan0735',
         password: '0durrdofx588ubjuiwzic7kp7mew53',
     },
-    channels: [],
+    channels: ['atrioc', 'crimpsonsloper'],
 };
 
 
@@ -72,7 +72,7 @@ client.on('message', async (channel, userstate, message, self) => {
 });
 
 app.get('/submissions', async (req, res) => {
-    const { channel, limit = 24, cursor, max_duration = 86400, min_duration = 0 } = req.query;
+    const { channel, limit = 8, cursor, max_duration = 86400, min_duration = 0 } = req.query;
     let position = cursor
 
     if (!channel) {
@@ -83,10 +83,6 @@ app.get('/submissions', async (req, res) => {
         const videos = await Video.findAll({
             where: {
                 submittedTo: channel,
-                duration: {
-                    [Sequelize.Op.gt]: Number(min_duration),
-                    [Sequelize.Op.lt]: Number(max_duration),
-                },
                 id: {
                     [Sequelize.Op.gt]: Number(position)
                 }
@@ -125,18 +121,21 @@ app.get('/load/:username', async (req, res) => {
                 cursor: 0
             }
         });
+        const lastVideo = await Video.findAll({
+            where: { submittedTo: username },
+            order: [['id', 'DESC']],
+            limit: 12
+        });
+        user.cursor = lastVideo[lastVideo.length - 1].id;
+        user.save()
 
-        if (!created) {
-            const lastVideo = await Video.findAll({
-                where: { submittedTo: username },
-                order: [['id', 'DESC']],
-                limit: 16
-            });
-            user.cursor = lastVideo[lastVideo.length - 1].id;
-            user.save()
-        }
-
-        res.status(200).json({ message: `User ${username} updated/created successfully`, data: user });
+        res.status(200).json({
+            message: `User ${username} updated/created successfully`,
+            data: {
+                cursor: lastVideo[0].id,
+                submissionsList: lastVideo
+            }
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server Error' });
