@@ -5,7 +5,7 @@ const twitch = require('tmi.js');
 
 const { Sequelize, DataTypes } = require("sequelize");
 const { getMetadata, extractVideoID } = require('./youtube/youtube');
-const { Video, User, forceSyncDB } = require('./models');
+const { Video, User } = require('./models');
 
 const app = express();
 const port = 3001;
@@ -21,7 +21,7 @@ const twitchOptions = {
         username: 'justinfan0735',
         password: '0durrdofx588ubjuiwzic7kp7mew53',
     },
-    channels: ['atrioc', 'crimpsonsloper'],
+    channels: ['atrioc', 'crimpsonsloper', 'ttlnow'],
 };
 
 
