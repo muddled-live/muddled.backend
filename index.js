@@ -111,10 +111,6 @@ app.get('/load/:username', async (req, res) => {
     try {
         const { username } = req.params;
 
-        if (!client.channels.includes(username)) {
-            await client.join(username);
-        }
-
         const [user, created] = await User.findOrCreate({
             where: { username: username },
             defaults: {
@@ -128,6 +124,8 @@ app.get('/load/:username', async (req, res) => {
         });
         user.cursor = lastVideo[lastVideo.length - 1].id;
         user.save()
+
+        console.log(lastVideo)
 
         res.status(200).json({
             message: `User ${username} updated/created successfully`,
