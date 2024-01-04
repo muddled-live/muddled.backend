@@ -21,7 +21,7 @@ const twitchOptions = {
         username: 'justinfan0735',
         password: '0durrdofx588ubjuiwzic7kp7mew53',
     },
-    channels: ['salkustar'],
+    channels: ['sakulstar'],
 };
 
 
