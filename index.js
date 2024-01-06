@@ -5,7 +5,9 @@ const twitch = require('tmi.js');
 
 const { Sequelize, DataTypes } = require("sequelize");
 const { getMetadata, extractVideoID } = require('./youtube/youtube');
-const { Video, User } = require('./models');
+const { Video, User, forceSyncDB } = require('./models');
+
+forceSyncDB();
 
 const app = express();
 const port = 3001;
@@ -18,10 +20,10 @@ const twitchOptions = {
         reconnect: true,
     },
     identity: {
-        username: 'justinfan0735',
+        username: 'justinfan0736',
         password: '0durrdofx588ubjuiwzic7kp7mew53',
     },
-    channels: ['sakulstar'],
+    channels: ['crimpsonsloper', 'atrioc'],
 };
 
 
@@ -110,6 +112,7 @@ app.get('/submissions', async (req, res) => {
 app.get('/load/:username', async (req, res) => {
     try {
         const { username } = req.params;
+        console.log(username)
 
         const [user, created] = await User.findOrCreate({
             where: { username: username },
@@ -124,8 +127,6 @@ app.get('/load/:username', async (req, res) => {
         });
         user.cursor = lastVideo[lastVideo.length - 1].id;
         user.save()
-
-        console.log(lastVideo)
 
         res.status(200).json({
             message: `User ${username} updated/created successfully`,
